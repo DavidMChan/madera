@@ -41,34 +41,18 @@ class Publisher(threading.Thread):
             self.step()
 
     def step(self,):
-        last_flush = time.time()
-        time_remaining = _initial_time_remaining(self.flush_interval)
         frame = []
-
-        # If there are outstanding events, we want to send before shutting down
-        shutdown = not self.parent_thread.is_alive()
-
-        while len(frame) < self.buffer_capacity and time_remaining > 0:
+        while True:
+            shutdown = not self.parent_thread.is_alive()
             try:
                 # Get an entry from the frame, with up to 1s of wait time
                 entry = self.pipe.get(block=(not shutdown), timeout=1.0)
                 frame.append(entry)
                 self.pipe.task_done()
             except queue.Empty:
-                if shutdown:
+                if shutdown or frame:
                     break
 
-            # Update the loop variables
-            shutdown = not self.parent_thread.is_alive()
-            time_remaining = _calculate_time_remaining(last_flush, self.flush_interval)
-
-        if frame:
-            for delay in RETRY_SCHEDULE + (None, ):
-                response = self.upload(frame)
-                if not _should_retry(response.status_code):
-                    break
-                if delay is not None:
-                    time.sleep(delay)
-
+        self.upload(frame)
         if shutdown:
             sys.exit(0)

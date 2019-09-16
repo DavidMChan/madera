@@ -28,6 +28,7 @@ class MaderaHandler(logging.Handler):
                  experiment,
                  run_id,
                  api_key,
+                 port=None,
                  buffer_capacity=DEFAULT_BUFFER_CAPACITY,
                  flush_interval=DEFAULT_FLUSH_INTERVAL,
                  raise_exceptions=DEFAULT_RAISE_EXCEPTIONS,
@@ -46,8 +47,13 @@ class MaderaHandler(logging.Handler):
         self.run_id = run_id
         self.api_key = api_key
 
+        if port is None:
+            self.host, self.port = self.host.split(':')
+        else:
+            self.port = port
+
         # Connect to the log server, and announce the experiment
-        self.uploader = Uploader(self.host, self.api_key, self.experiment, self.run_id)
+        self.uploader = Uploader(self.host, self.port, self.api_key, self.experiment, self.run_id)
 
         # Build the publisher
         self.pipe = multiprocessing.JoinableQueue(maxsize=buffer_capacity)
@@ -65,13 +71,14 @@ class MaderaHandler(logging.Handler):
 
     def emit(self, record):
         # If the publisher has died, then we need to restart the thread
-        if self._is_main_process() and not self.publisher_thread.is_alive():
+        if _is_main_process() and not self.publisher_thread.is_alive():
             self.publisher_thread.start()
         message = self.format(record)  # Format the log string
-        frame = create_frame(record, message)  # Build an element to send
+        frame = create_frame(record, message, self.uploader.rank_id)  # Build an element to send
 
         # Add the frame to the multiprocessing queue for flushing to the server
         try:
+            print('Emitting message...')
             self.pipe.put(frame, block=(not self.drop_extra_events))
         except queue.Full:
             self.dropped_events += 1

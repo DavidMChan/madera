@@ -108,3 +108,6 @@ ENV/
 .vscode/
 
 madera/kafka/kafka_2.12-2.3.0
+kafka.log
+zookeeper.log
+run_db.json
