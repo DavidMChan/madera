@@ -1,3 +1,4 @@
 include README.md
 include LICENSE
-include kafka_2.12-2.3.0.tgz
+include madera/kafka/kafka_2.12-2.3.0.tgz
+include madera/scripts/templates/*.jinja

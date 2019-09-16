@@ -28,7 +28,7 @@ with open('README.md', 'r') as rf:
 
 setup(
     name='madera',
-    version='1.0',
+    version='1.0.2',
     description='Distributed logging with Kafka',
     long_description=README,
     long_description_content_type='text/markdown',
@@ -44,6 +44,7 @@ setup(
         'jinja2',
         'tinydb',
     ],
+    include_package_data=True,
     entry_points={
         'console_scripts': [
             'maderad = madera.scripts.maderad:main',
