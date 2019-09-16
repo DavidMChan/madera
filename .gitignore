@@ -107,7 +107,4 @@ ENV/
 *.swo
 .vscode/
 
-benchmark
-benchmark/*
-test.py
-research/
+madera/kafka/kafka_2.12-2.3.0

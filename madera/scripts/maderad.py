@@ -6,6 +6,8 @@ import subprocess
 import sys
 import tempfile
 import time
+import random
+import string
 
 import jinja2
 import click
@@ -64,6 +66,22 @@ def main(**kwargs):
         # Wait for zookeeper to start up
         time.sleep(5)
 
+        # Write the Kafka JAAS
+        api_key = ''.join(random.choice(string.ascii_lowercase) for _ in range(16))
+        with open(os.path.join(local_bin_path, 'templates', 'kafka_server_jaas.jinja'), 'r') as jf:
+            jaas_template = jinja2.Template(jf.read())
+        jaas_temp = tempfile.NamedTemporaryFile('w+')
+        jaas_temp.write(jaas_template.render(user_password=api_key))
+        jaas_temp.flush()
+        print('API Key: {}'.format(api_key))
+
+        # Write the server-start-sh
+        with open(os.path.join(local_bin_path, 'templates', 'kafka-server-start.sh.jinja'), 'r') as jf:
+            kss_template = jinja2.Template(jf.read())
+        kss_temp = tempfile.NamedTemporaryFile('w+')
+        kss_temp.write(kss_template.render(kafka_jaas=jaas_temp.name, kafka_bindir=kafka_bin_path))
+        kss_temp.flush()
+
         # Launch the Kafka broker
 
         # Write the kafka server properties
@@ -87,7 +105,7 @@ def main(**kwargs):
 
         logging.info('Launching kafka instance on port %s', port)
         cmd = 'exec '
-        cmd += str(os.path.join(kafka_bin_path, 'kafka-server-start.sh'))
+        cmd += kss_temp.name
         cmd += ' {}'.format(kafka_temp.name)
         cmd += ' > {} 2>&1'.format(os.path.join(data_dir, 'kafka.log'))
         process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, preexec_fn=os.setsid)
