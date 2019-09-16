@@ -1,0 +1,3 @@
+# Madera
+
+Distributed Logging System

@@ -1,0 +1,7 @@
+# Core requirements
+confluent-kafka
+msgpack
+requests
+click
+jinja2
+tinydb
