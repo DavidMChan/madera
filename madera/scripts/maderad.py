@@ -84,12 +84,6 @@ def main(**kwargs):
         kss_temp.write(kss_template.render(kafka_jaas=jaas_temp.name, kafka_bindir=kafka_bin_path))
         kss_temp.flush()
 
-        # Make the file executable
-        st = os.stat(kss_temp.name)
-        os.chmod(kss_temp.name, st.st_mode | stat.S_IEXEC)
-
-        time.sleep(3)
-
         # Launch the Kafka broker
 
         # Write the kafka server properties
@@ -112,7 +106,7 @@ def main(**kwargs):
         kafka_temp.flush()
 
         logging.info('Launching kafka instance on port %s', port)
-        cmd = 'exec '
+        cmd = 'chmod +x {} && exec '.format(kss_temp.name)
         cmd += kss_temp.name
         cmd += ' {}'.format(kafka_temp.name)
         cmd += ' > {} 2>&1'.format(os.path.join(data_dir, 'kafka.log'))
