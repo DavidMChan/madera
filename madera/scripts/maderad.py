@@ -66,7 +66,13 @@ def main(**kwargs):
         zookeeper_processes.append(process)
 
         # Wait for zookeeper to start up
-        time.sleep(5)
+        print('Waiting for zookeeper to start', end='')
+        sys.stdout.flush()
+        for _ in range(10):
+            print('.',end='')
+            sys.stdout.flush()
+            time.sleep(1)
+        print()
 
         # Write the Kafka JAAS
         logging.info('Creating Kafka JAAS file')
