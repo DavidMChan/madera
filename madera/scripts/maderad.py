@@ -1,6 +1,7 @@
 
 import logging
 import os
+import stat
 import platform
 import subprocess
 import sys
@@ -81,6 +82,10 @@ def main(**kwargs):
         kss_temp = tempfile.NamedTemporaryFile('w+')
         kss_temp.write(kss_template.render(kafka_jaas=jaas_temp.name, kafka_bindir=kafka_bin_path))
         kss_temp.flush()
+        
+        # Make the file executable
+        st = os.stat(kss_temp.name)
+        os.chmod(kss_temp.name, st.st_mode | stat.S_IEXEC)
 
         # Launch the Kafka broker
 
