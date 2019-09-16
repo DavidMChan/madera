@@ -68,24 +68,27 @@ def main(**kwargs):
         time.sleep(5)
 
         # Write the Kafka JAAS
+        logging.info('Creating Kafka JAAS file')
         api_key = ''.join(random.choice(string.ascii_lowercase) for _ in range(16))
         with open(os.path.join(local_bin_path, 'templates', 'kafka_server_jaas.jinja'), 'r') as jf:
             jaas_template = jinja2.Template(jf.read())
         jaas_temp = tempfile.NamedTemporaryFile('w+')
         jaas_temp.write(jaas_template.render(user_password=api_key))
         jaas_temp.flush()
-        print('API Key: {}'.format(api_key))
 
         # Write the server-start-sh
+        logging.info('Creating Kafka server start script')
         with open(os.path.join(local_bin_path, 'templates', 'kafka-server-start.sh.jinja'), 'r') as jf:
             kss_template = jinja2.Template(jf.read())
         kss_temp = tempfile.NamedTemporaryFile('w+')
         kss_temp.write(kss_template.render(kafka_jaas=jaas_temp.name, kafka_bindir=kafka_bin_path))
         kss_temp.flush()
-        
+
         # Make the file executable
         st = os.stat(kss_temp.name)
         os.chmod(kss_temp.name, st.st_mode | stat.S_IEXEC)
+
+        time.sleep(3)
 
         # Launch the Kafka broker
 
@@ -117,6 +120,7 @@ def main(**kwargs):
         kafka_processes.append(process)
 
         print('Finished launch! Running on port: {}'.format(port))
+        print('API Key: {}'.format(api_key))
 
         # Wait for and clean up returned processse
         for process in kafka_processes + zookeeper_processes:
