@@ -54,6 +54,7 @@ def main(**kwargs):
         # Write the zookeeper properties configuration file
         zookeeper_temp.write(zookeeper_template.render(client_port=kwargs['zookeeper_port']))
         zookeeper_temp.flush()
+        zookeeper_temp.file.close()
 
         # Launch the zookeeper instance
         logging.info('Launching zookeeper instance on port %s', port)
@@ -75,6 +76,7 @@ def main(**kwargs):
         jaas_temp = tempfile.NamedTemporaryFile('w+')
         jaas_temp.write(jaas_template.render(user_password=api_key))
         jaas_temp.flush()
+        jaas_temp.file.close()
 
         # Write the server-start-sh
         logging.info('Creating Kafka server start script')
@@ -83,6 +85,8 @@ def main(**kwargs):
         kss_temp = tempfile.NamedTemporaryFile('w+')
         kss_temp.write(kss_template.render(kafka_jaas=jaas_temp.name, kafka_bindir=kafka_bin_path))
         kss_temp.flush()
+        kss_temp.file.close()
+
 
         # Launch the Kafka broker
 
@@ -104,6 +108,8 @@ def main(**kwargs):
         # Write the zookeeper properties configuration file
         kafka_temp.write(kafka_template.render(zookeeper_port=kwargs['zookeeper_port'], kafka_port=kwargs['port']))
         kafka_temp.flush()
+        kafka_temp.file.close()
+
 
         logging.info('Launching kafka instance on port %s', port)
         cmd = 'chmod +x {} && exec '.format(kss_temp.name)
@@ -130,13 +136,24 @@ def main(**kwargs):
         except NameError:
             pass
         try:
+            jaas_temp.close()
+        except NameError:
+            pass
+        try:
+            kss_temp.close()
+        except NameError:
+            pass
+        try:
             kafka_temp.close()
         except NameError:
             pass
 
+        # Kill the Kafka processes cleanly
         for p in kafka_processes:
             p.kill()
         print('Finished cleaning up Kafka.')
+
+        # Kill the zookeeper processes cleanly
         print('Waiting one moment before cleaning up zookeeper...')
         time.sleep(5)
         for p in zookeeper_processes:
