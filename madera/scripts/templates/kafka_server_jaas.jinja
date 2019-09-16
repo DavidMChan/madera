@@ -1,4 +1,12 @@
 KafkaServer {
    org.apache.kafka.common.security.plain.PlainLoginModule required
+   username="admin"
+   password="{{user_password}}"
    user_admin="{{user_password}}";
+};
+
+KafkaClient {
+   org.apache.kafka.common.security.plain.PlainLoginModule required
+   username="admin"
+   password="{{user_password}}";
 };
